@@ -70,6 +70,7 @@ private:
 - (void)dealloc {
     MC_SAFE_RELEASE(_loggerBridge);
     [_connectionLogger release];
+    _session->setConnectionLogger(NULL);
     _session->release();
     [super dealloc];
 }
@@ -82,6 +83,7 @@ MCO_OBJC_SYNTHESIZE_SCALAR(MCOAuthType, mailcore::AuthType, setAuthType, authTyp
 MCO_OBJC_SYNTHESIZE_SCALAR(MCOConnectionType, mailcore::ConnectionType, setConnectionType, connectionType)
 MCO_OBJC_SYNTHESIZE_SCALAR(NSTimeInterval, time_t, setTimeout, timeout)
 MCO_OBJC_SYNTHESIZE_BOOL(setCheckCertificateEnabled, isCheckCertificateEnabled)
+MCO_OBJC_SYNTHESIZE_SCALAR(dispatch_queue_t, dispatch_queue_t, setDispatchQueue, dispatchQueue);
 
 - (void) setConnectionLogger:(MCOConnectionLogger)connectionLogger
 {

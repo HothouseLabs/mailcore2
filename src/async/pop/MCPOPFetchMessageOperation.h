@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCPOPFETCHMESSAGEOPERATION_H_
+#ifndef MAILCORE_MCPOPFETCHMESSAGEOPERATION_H
 
-#define __MAILCORE_MCPOPFETCHMESSAGEOPERATION_H_
+#define MAILCORE_MCPOPFETCHMESSAGEOPERATION_H
 
 #include <MailCore/MCPOPOperation.h>
 
@@ -33,6 +33,7 @@ namespace mailcore {
         Data * mData;
         
     };
+    
 }
 
 #endif

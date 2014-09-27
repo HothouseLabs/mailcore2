@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCATTACHMENT_H_
+#ifndef MAILCORE_MCATTACHMENT_H
 
-#define __MAILCORE_MCATTACHMENT_H_
+#define MAILCORE_MCATTACHMENT_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCAbstractPart.h>
@@ -46,6 +46,7 @@ namespace mailcore {
         static MessagePart * attachmentWithMessageMIME(struct mailmime * mime);
         static Encoding encodingForMIMEEncoding(struct mailmime_mechanism * mechanism, int defaultMimeEncoding);
         static HashMap * readMimeTypesFile(String * filename);
+        void setContentTypeParameters(HashMap * parameters);
     };
     
 }

@@ -154,7 +154,7 @@ mailcore::HashMap * HTMLRendererTemplateCallback::templateValuesForPart(mailcore
     
     if (part->className()->isEqual(MCSTR("mailcore::IMAPPart"))) {
         mailcore::IMAPPart * imapPart = (mailcore::IMAPPart *) part;
-        mailcore::String * value = mailcore::SizeFormatter::stringWithSize(imapPart->size());
+        mailcore::String * value = mailcore::SizeFormatter::stringWithSize(imapPart->decodedSize());
         result->setObjectForKey(MCSTR("SIZE"), value);
         result->setObjectForKey(MCSTR("HASSIZE"), mailcore::HashMap::hashMap());
     }
@@ -248,6 +248,11 @@ mailcore::String * HTMLRendererTemplateCallback::filterHTMLForMessage(mailcore::
     return html;
 }
 
+mailcore::String * HTMLRendererTemplateCallback::cleanHTMLForPart(mailcore::String * html)
+{
+    return html->cleanedHTMLString();
+}
+
 mailcore::String * HTMLRendererTemplateCallback::filterHTMLForPart(mailcore::String * html)
 {
     return html;
@@ -260,5 +265,5 @@ bool HTMLRendererTemplateCallback::canPreviewPart(AbstractPart * part)
 
 bool HTMLRendererTemplateCallback::shouldShowPart(AbstractPart * part)
 {
-	return true;
+    return true;
 }

@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCMESSAGEPART_H_
+#ifndef MAILCORE_MCMESSAGEPART_H
 
-#define __MAILCORE_MCMESSAGEPART_H_
+#define MAILCORE_MCMESSAGEPART_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCAbstractMessagePart.h>
@@ -8,16 +8,17 @@
 #ifdef __cplusplus
 
 namespace mailcore {
-	
-	class MessagePart : public AbstractMessagePart {
-	public:
-		MessagePart();
-		virtual ~MessagePart();
+    
+    class MessagePart : public AbstractMessagePart {
+    public:
+        MessagePart();
+        virtual ~MessagePart();
         
     public: // subclass behavior
-		MessagePart(MessagePart * other);
-		virtual Object * copy();
-	};
+        MessagePart(MessagePart * other);
+        virtual Object * copy();
+    };
+    
 }
 
 #endif

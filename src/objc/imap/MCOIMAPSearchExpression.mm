@@ -67,6 +67,20 @@
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchFrom([value mco_mcString]));
 }
 
++ (MCOIMAPSearchExpression *) searchTo:(NSString *)value
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchTo([value mco_mcString]));
+}
+
++ (MCOIMAPSearchExpression *) searchCc:(NSString *)value
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchCc([value mco_mcString]));
+}
+
++ (MCOIMAPSearchExpression *) searchBcc:(NSString *)value
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchBcc([value mco_mcString]));
+}
 + (MCOIMAPSearchExpression *) searchRecipient:(NSString *)value
 {
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchRecipient([value mco_mcString]));
@@ -82,6 +96,15 @@
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchContent([value mco_mcString]));
 }
 
++ (MCOIMAPSearchExpression *) searchBody:(NSString *)value
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchBody([value mco_mcString]));
+}
+
++ (MCOIMAPSearchExpression *) searchUIDs:(MCOIndexSet *) uids
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchUIDs(MCO_FROM_OBJC(mailcore::IndexSet, uids)));
+}
 + (MCOIMAPSearchExpression *) searchHeader:(NSString *)header value:(NSString *)value
 {
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchHeader([header mco_mcString], [value mco_mcString]));
@@ -167,9 +190,29 @@
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchSinceReceivedDate((time_t) [date timeIntervalSince1970]));
 }
 
++ (MCOIMAPSearchExpression *) searchSizeLargerThan:(uint32_t)size
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchSizeLarger(size));
+}
+
++ (MCOIMAPSearchExpression *) searchSizeSmallerThan:(uint32_t)size
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchSizeSmaller(size));
+}
+
 + (MCOIMAPSearchExpression *) searchGmailThreadID:(uint64_t)number
 {
     return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchGmailThreadID(number));
+}
+
++ (MCOIMAPSearchExpression *) searchGmailMessageID:(uint64_t)number
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchGmailMessageID(number));
+}
+
++ (MCOIMAPSearchExpression *) searchGmailRaw:(NSString *)expr
+{
+    return MCO_TO_OBJC(mailcore::IMAPSearchExpression::searchGmailRaw([expr mco_mcString]));
 }
 
 + (MCOIMAPSearchExpression *) searchAnd:(MCOIMAPSearchExpression *)expression other:(MCOIMAPSearchExpression *)other
@@ -181,6 +224,12 @@
 + (MCOIMAPSearchExpression *) searchOr:(MCOIMAPSearchExpression *)expression other:(MCOIMAPSearchExpression *)other
 {
     mailcore::IMAPSearchExpression * result = mailcore::IMAPSearchExpression::searchOr(expression->_nativeExpr, other->_nativeExpr);
+    return MCO_TO_OBJC(result);
+}
+
++ (MCOIMAPSearchExpression *) searchNot:(MCOIMAPSearchExpression *)expression
+{
+    mailcore::IMAPSearchExpression * result = mailcore::IMAPSearchExpression::searchNot(expression->_nativeExpr);
     return MCO_TO_OBJC(result);
 }
 

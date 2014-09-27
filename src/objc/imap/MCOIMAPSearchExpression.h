@@ -6,14 +6,15 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCOIMAPSEARCHEXPRESSION_H_
+#ifndef MAILCORE_MCOIMAPSEARCHEXPRESSION_H
 
-#define __MAILCORE_MCOIMAPSEARCHEXPRESSION_H_
+#define MAILCORE_MCOIMAPSEARCHEXPRESSION_H
 
 /** Used to construct an IMAP search query */
 
 #import <Foundation/Foundation.h>
 #import <MailCore/MCOConstants.h>
+#import <MailCore/MCOIndexSet.h>
 
 @interface MCOIMAPSearchExpression : NSObject
 
@@ -37,12 +38,39 @@
 
 /**
  Creates a search expression that matches any recipient of an email.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchRecipient:@"ngan@etpan.org"]
+ **/
++ (MCOIMAPSearchExpression *) searchRecipient:(NSString *)value;
+
+/**
+ Creates a search expression that matches on the receiver (to) of an email. Useful to check whether the mail is directly addressed to the receiver.
 
  Example:
 
-    MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchRecipient:@"ngan@etpan.org"]
+    MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchTo:@"ngan@etpan.org"]
 **/
-+ (MCOIMAPSearchExpression *) searchRecipient:(NSString *)value;
++ (MCOIMAPSearchExpression *) searchTo:(NSString *)value;
+
+/**
+ Creates a search expression that matches on the cc of an email. Useful to check whether the mail is addressed to the receiver as cc.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchCc:@"ngan@etpan.org"]
+ **/
++ (MCOIMAPSearchExpression *) searchCc:(NSString *)value;
+
+/**
+ Creates a search expression that matches on the bcc field of an email. Useful to check whether the mail is addressed to the receiver as bcc.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchBcc:@"ngan@etpan.org"]
+ **/
++ (MCOIMAPSearchExpression *) searchBcc:(NSString *)value;
 
 /*
  Creates a search expression that matches the subject of an email.
@@ -54,13 +82,31 @@
 + (MCOIMAPSearchExpression *) searchSubject:(NSString *)value;
 
 /**
- Creates a search expression that matches the content of an email.
+ Creates a search expression that matches the content of an email, including the headers.
 
  Example:
 
      MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchContent:@"meeting"]
 */
 + (MCOIMAPSearchExpression *) searchContent:(NSString *)value;
+
+/**
+ Creates a search expression that matches the content of an email, excluding the headers.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchBody:@"building"]
+ */
++ (MCOIMAPSearchExpression *) searchBody:(NSString *)value;
+
+/**
+ Creates a search expression that matches the uids specified.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchUids:uids]
+ **/
++ (MCOIMAPSearchExpression *) searchUIDs:(MCOIndexSet *) uids;
 
 /**
  Creates a search expression that matches the content of a specific header.
@@ -222,6 +268,26 @@
 + (MCOIMAPSearchExpression *) searchSinceReceivedDate:(NSDate *)date;
 
 /**
+ Creates a search expression that matches messages larger than a given size in bytes.
+ 
+ Example:
+ 
+ uint32_t minSize = 1024 * 10; // 10 KB
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchSizeLargerThan:minSize]
+ **/
++ (MCOIMAPSearchExpression *) searchSizeLargerThan:(uint32_t)size;
+
+/**
+ Creates a search expression that matches messages smaller than a given size in bytes.
+ 
+ Example:
+ 
+ uint32_t maxSize = 1024 * 10; // 10 KB
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchSizeSmallerThan:maxSize]
+ **/
++ (MCOIMAPSearchExpression *) searchSizeSmallerThan:(uint32_t)size;
+
+/**
  Creates a search expression that matches emails with the given gmail thread id
  
  Example:
@@ -229,6 +295,27 @@
  MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchGmailThreadID:aThreadID]
  */
 + (MCOIMAPSearchExpression *) searchGmailThreadID:(uint64_t)number;
+
+
+/**
+ Creates a search expression that matches emails with the given gmail message id
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchGmailMessageID:aMessageID]
+ */
++ (MCOIMAPSearchExpression *) searchGmailMessageID:(uint64_t)number;
+
+/**
+ Creates a search expression that gets emails that match a gmail raw search
+ expression.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchGmailRaw:@"from:bill has:attachment filename:cal meeting schedule"]
+ */
++ (MCOIMAPSearchExpression *) searchGmailRaw:(NSString *)expr;
+
 
 /**
  Creates a search expression that's a disjunction of two search expressions.
@@ -251,6 +338,18 @@
      MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchOr:exprFrom exprOtherFrom];
 */
 + (MCOIMAPSearchExpression *) searchOr:(MCOIMAPSearchExpression *)expression other:(MCOIMAPSearchExpression *)other;
+
+/**
+ Creates a search expression that matches when the argument is not matched.
+ 
+ Example:
+ 
+ MCOIMAPSearchExpression * exprSubject = [MCOIMAPSearchExpression searchSubject:@"airline"]
+ MCOIMAPSearchExpression * expr = [MCOIMAPSearchExpression searchNot:exprSubject];
+ The expression will match when the subject does not contain the word airline
+ 
+ */
++ (MCOIMAPSearchExpression *) searchNot:(MCOIMAPSearchExpression *)expression;
 
 @end
 

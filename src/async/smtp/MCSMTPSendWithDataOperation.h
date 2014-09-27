@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCSMTPSENDWITHDATAOPERATION_H_
+#ifndef MAILCORE_MCSMTPSENDWITHDATAOPERATION_H
 
-#define __MAILCORE_MCSMTPSENDWITHDATAOPERATION_H_
+#define MAILCORE_MCSMTPSENDWITHDATAOPERATION_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCAbstract.h>
@@ -17,7 +17,7 @@
 #ifdef __cplusplus
 
 namespace mailcore {
-
+    
     class SMTPSendWithDataOperation : public SMTPOperation {
     public:
         SMTPSendWithDataOperation();
@@ -41,6 +41,7 @@ namespace mailcore {
         Address * mFrom;
         
     };
+    
 }
 
 #endif

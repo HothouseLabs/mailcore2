@@ -99,12 +99,12 @@ MCO_SYNTHESIZE_NSCODING
 
 + (NSArray *) addressesWithRFC822String:(NSString *)string
 {
-	return [NSArray mco_arrayWithMCArray:mailcore::Address::addressesWithRFC822String(string.mco_mcString)];
+    return [NSArray mco_arrayWithMCArray:mailcore::Address::addressesWithRFC822String(string.mco_mcString)];
 }
 
 + (NSArray *) addressesWithNonEncodedRFC822String:(NSString *)string
 {
-	return [NSArray mco_arrayWithMCArray:mailcore::Address::addressesWithNonEncodedRFC822String(string.mco_mcString)];
+    return [NSArray mco_arrayWithMCArray:mailcore::Address::addressesWithNonEncodedRFC822String(string.mco_mcString)];
 }
 
 
@@ -159,18 +159,34 @@ MCO_OBJC_SYNTHESIZE_STRING(setMailbox, mailbox)
     return MCO_OBJC_BRIDGE_GET(nonEncodedRFC822String);
 }
 
+- (NSUInteger) hash
+{
+    return [[self displayName] hash] ^ [[self mailbox] hash];
+}
+
+- (BOOL) isEqual:(id)object
+{
+    if (![object isKindOfClass:[MCOAddress class]]) {
+        return NO;
+    }
+
+    MCOAddress * other = object;
+    return [[self displayName] isEqualToString:[other displayName]] &&
+        [[self mailbox] isEqualToString:[other mailbox]];
+}
+
 @end
 
 @implementation NSArray (MCOAddress)
 
 - (NSString *) mco_RFC822StringForAddresses
 {
-	return [NSString mco_stringWithMCString:mailcore::Address::RFC822StringForAddresses([self mco_mcArray])];
+    return [NSString mco_stringWithMCString:mailcore::Address::RFC822StringForAddresses([self mco_mcArray])];
 }
 
 - (NSString *) mco_nonEncodedRFC822StringForAddresses
 {
-	return [NSString mco_stringWithMCString:mailcore::Address::nonEncodedRFC822StringForAddresses([self mco_mcArray ])];
+    return [NSString mco_stringWithMCString:mailcore::Address::nonEncodedRFC822StringForAddresses([self mco_mcArray ])];
 }
 
 @end

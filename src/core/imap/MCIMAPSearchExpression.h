@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCIMAPSEARCHEXPRESSION_H_
+#ifndef MAILCORE_MCIMAPSEARCHEXPRESSION_H
 
-#define __MAILCORE_MCIMAPSEARCHEXPRESSION_H_
+#define MAILCORE_MCIMAPSEARCHEXPRESSION_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCMessageConstants.h>
@@ -8,7 +8,7 @@
 #ifdef __cplusplus
 
 namespace mailcore {
-
+    
     class IMAPSearchExpression : public Object {
     public:
         IMAPSearchExpression();
@@ -19,15 +19,23 @@ namespace mailcore {
         virtual String * value();
         virtual uint64_t longNumber();
         virtual time_t date();
+        virtual IndexSet * uids();
+        
+        
         virtual IMAPSearchExpression * leftExpression();
         virtual IMAPSearchExpression * rightExpression();
         
         static IMAPSearchExpression * searchAll();
         static IMAPSearchExpression * searchFrom(String * value);
+        static IMAPSearchExpression * searchTo(String *value);
+        static IMAPSearchExpression * searchCc(String *value);
+        static IMAPSearchExpression * searchBcc(String *value);
         static IMAPSearchExpression * searchRecipient(String * value);
         static IMAPSearchExpression * searchSubject(String * value);
         static IMAPSearchExpression * searchContent(String * value);
+        static IMAPSearchExpression * searchBody(String * value);
         static IMAPSearchExpression * searchHeader(String * header, String * value);
+        static IMAPSearchExpression * searchUIDs(IndexSet * uids);
         static IMAPSearchExpression * searchRead();
         static IMAPSearchExpression * searchUnread();
         static IMAPSearchExpression * searchFlagged();
@@ -44,9 +52,15 @@ namespace mailcore {
         static IMAPSearchExpression * searchBeforeReceivedDate(time_t date);
         static IMAPSearchExpression * searchOnReceivedDate(time_t date);
         static IMAPSearchExpression * searchSinceReceivedDate(time_t date);
+        static IMAPSearchExpression * searchSizeLarger(uint32_t size);
+        static IMAPSearchExpression * searchSizeSmaller(uint32_t size);
         static IMAPSearchExpression * searchGmailThreadID(uint64_t number);
+        static IMAPSearchExpression * searchGmailMessageID(uint64_t number);
+        static IMAPSearchExpression * searchGmailRaw(String * expr);
         static IMAPSearchExpression * searchAnd(IMAPSearchExpression * left, IMAPSearchExpression * right);
         static IMAPSearchExpression * searchOr(IMAPSearchExpression * left, IMAPSearchExpression * right);
+        static IMAPSearchExpression * searchNot(IMAPSearchExpression * notExpr);
+        
         
     public: // subclass behavior
         IMAPSearchExpression(IMAPSearchExpression * other);
@@ -58,7 +72,7 @@ namespace mailcore {
         String * mHeader;
         String * mValue;
         uint64_t mLongNumber;
-        time_t mDate;
+        IndexSet * mUids;
         IMAPSearchExpression * mLeftExpression;
         IMAPSearchExpression * mRightExpression;
         void init();

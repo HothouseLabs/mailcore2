@@ -6,14 +6,16 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCSIZEFORMATTER_H_
-#define __MAILCORE_MCSIZEFORMATTER_H_
+#ifndef MAILCORE_MCSIZEFORMATTER_H
+
+#define MAILCORE_MCSIZEFORMATTER_H
 
 #include <MailCore/MCBaseTypes.h>
 
 #ifdef __cplusplus
 
 namespace mailcore {
+    
     class String;
     
     class SizeFormatter : public Object {

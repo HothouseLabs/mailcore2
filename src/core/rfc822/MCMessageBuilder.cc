@@ -21,20 +21,42 @@ part_new_empty(struct mailmime_content * content,
 
 static struct mailmime * get_multipart_alternative(const char * boundary_prefix)
 {
-	struct mailmime * mime;
-	
-	mime = part_multiple_new("multipart/alternative", boundary_prefix);
-	
-	return mime;
+    struct mailmime * mime;
+    
+    mime = part_multiple_new("multipart/alternative", boundary_prefix);
+    
+    return mime;
 }
 
 static struct mailmime * get_multipart_related(const char * boundary_prefix)
 {
-	struct mailmime * mime;
-	
-	mime = part_multiple_new("multipart/related", boundary_prefix);
-	
-	return mime;
+    struct mailmime * mime;
+    
+    mime = part_multiple_new("multipart/related", boundary_prefix);
+    
+    return mime;
+}
+
+static struct mailmime * get_multipart_signed_pgp(const char * boundary_prefix)
+{
+    struct mailmime * mime;
+    
+    mime = part_multiple_new("multipart/signed", boundary_prefix);
+    struct mailmime_parameter * param = mailmime_param_new_with_data((char *) "protocol", (char *) "application/pgp-signature");
+    clist_append(mime->mm_content_type->ct_parameters, param);
+    
+    return mime;
+}
+
+static struct mailmime * get_multipart_encrypted_pgp(const char * boundary_prefix)
+{
+    struct mailmime * mime;
+    
+    mime = part_multiple_new("multipart/encrypted", boundary_prefix);
+    struct mailmime_parameter * param = mailmime_param_new_with_data((char *) "protocol", (char *) "application/pgp-encrypted");
+    clist_append(mime->mm_content_type->ct_parameters, param);
+    
+    return mime;
 }
 
 static int add_attachment(struct mailmime * mime,
@@ -134,54 +156,64 @@ err:
 
 static struct mailmime * get_text_part(const char * mime_type, const char * charset, const char * content_id,
                                 const char * description,
-								const char * text, size_t length, int encoding_type)
+                                const char * text, size_t length, int encoding_type, clist * contentTypeParameters)
 {
-	struct mailmime_fields * mime_fields;
-	struct mailmime * mime;
-	struct mailmime_content * content;
-	struct mailmime_parameter * param;
-	struct mailmime_disposition * disposition;
-	struct mailmime_mechanism * encoding;
-	char * dup_content_id;
+    struct mailmime_fields * mime_fields;
+    struct mailmime * mime;
+    struct mailmime_content * content;
+    struct mailmime_parameter * param;
+    struct mailmime_disposition * disposition;
+    struct mailmime_mechanism * encoding;
+    char * dup_content_id;
     char * dup_description;
     
-	encoding = mailmime_mechanism_new(encoding_type, NULL);
-	disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_INLINE,
-													 NULL, NULL, NULL, NULL, (size_t) -1);
+    encoding = mailmime_mechanism_new(encoding_type, NULL);
+    disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_INLINE,
+                                                     NULL, NULL, NULL, NULL, (size_t) -1);
     dup_content_id = NULL;
     if (content_id != NULL)
         dup_content_id = strdup(content_id);
     dup_description = NULL;
     if (dup_description != NULL)
         dup_description = strdup(description);
-	mime_fields = mailmime_fields_new_with_data(encoding,
+    mime_fields = mailmime_fields_new_with_data(encoding,
                                                 dup_content_id, dup_description, disposition, NULL);
-	
-	content = mailmime_content_new_with_str(mime_type);
-	if (charset == NULL) {
-		param = mailmime_param_new_with_data((char *) "charset", (char *) "utf-8");
-	}
-	else {
-		param = mailmime_param_new_with_data((char *) "charset", (char *) charset);
-	}
-	clist_append(content->ct_parameters, param);
-	mime = part_new_empty(content, mime_fields, NULL, 1);
-	mailmime_set_body_text(mime, (char *) text, length);
-	
-	return mime;
+    
+    content = mailmime_content_new_with_str(mime_type);
+    if (charset == NULL) {
+        param = mailmime_param_new_with_data((char *) "charset", (char *) "utf-8");
+    }
+    else {
+        param = mailmime_param_new_with_data((char *) "charset", (char *) charset);
+    }
+    clist_append(content->ct_parameters, param);
+    if (contentTypeParameters != NULL) {
+        clist_concat(content->ct_parameters, contentTypeParameters);
+    }
+    
+    mime = part_new_empty(content, mime_fields, NULL, 1);
+    mailmime_set_body_text(mime, (char *) text, length);
+    
+    return mime;
 }
 
 static struct mailmime * get_plain_text_part(const char * mime_type, const char * charset, const char * content_id,
                                       const char * description,
-                                      const char * text, size_t length)
+                                      const char * text, size_t length, clist * contentTypeParameters, bool forEncryption)
 {
     bool needsQuotedPrintable;
     int mechanism;
     
     needsQuotedPrintable = false;
-    for(size_t i = 0 ; i < length ; i ++) {
-        if ((text[i] & (1 << 7)) != 0) {
-            needsQuotedPrintable = true;
+    if (forEncryption) {
+        needsQuotedPrintable = true;
+    }
+    if (!needsQuotedPrintable) {
+        for(size_t i = 0 ; i < length ; i ++) {
+            if ((text[i] & (1 << 7)) != 0) {
+                needsQuotedPrintable = true;
+                break;
+            }
         }
     }
     
@@ -189,64 +221,86 @@ static struct mailmime * get_plain_text_part(const char * mime_type, const char 
     if (needsQuotedPrintable) {
         mechanism = MAILMIME_MECHANISM_QUOTED_PRINTABLE;
     }
-    return get_text_part(mime_type, charset, content_id, description, text, length, mechanism);
+    return get_text_part(mime_type, charset, content_id, description, text, length, mechanism, contentTypeParameters);
 }
 
 static struct mailmime * get_other_text_part(const char * mime_type, const char * charset, const char * content_id,
                                       const char * description,
-                                      const char * text, size_t length)
+                                      const char * text, size_t length, clist * contentTypeParameters)
 {
-    return get_text_part(mime_type, charset, content_id, description, text, length, MAILMIME_MECHANISM_QUOTED_PRINTABLE);
+    return get_text_part(mime_type, charset, content_id, description, text, length, MAILMIME_MECHANISM_QUOTED_PRINTABLE, contentTypeParameters);
 }
 
 static struct mailmime * get_file_part(const char * filename, const char * mime_type, int is_inline,
                                        const char * content_id,
                                        const char * content_description,
-                                       const char * text, size_t length)
+                                       const char * text, size_t length, clist * contentTypeParameters)
 {
-	char * disposition_name;
-	int encoding_type;
-	struct mailmime_disposition * disposition;
-	struct mailmime_mechanism * encoding;
-	struct mailmime_content * content;
-	struct mailmime * mime;
-	struct mailmime_fields * mime_fields;
-	char * dup_content_id;
+    char * disposition_name;
+    int encoding_type;
+    struct mailmime_disposition * disposition;
+    struct mailmime_mechanism * encoding;
+    struct mailmime_content * content;
+    struct mailmime * mime;
+    struct mailmime_fields * mime_fields;
+    char * dup_content_id;
     char * dup_content_description;
 
-	disposition_name = NULL;
-	if (filename != NULL) {
-		disposition_name = strdup(filename);
-	}
-	if (is_inline) {
-		disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_INLINE,
-														 disposition_name, NULL, NULL, NULL, (size_t) -1);
-	}
-	else {
-		disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_ATTACHMENT,
-														 disposition_name, NULL, NULL, NULL, (size_t) -1);
-	}
-	content = mailmime_content_new_with_str(mime_type);
-	
-	encoding_type = MAILMIME_MECHANISM_BASE64;
-	encoding = mailmime_mechanism_new(encoding_type, NULL);
+    disposition_name = NULL;
+    if (filename != NULL) {
+        disposition_name = strdup(filename);
+    }
+    if (is_inline) {
+        disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_INLINE,
+                                                         disposition_name, NULL, NULL, NULL, (size_t) -1);
+    }
+    else {
+        disposition = mailmime_disposition_new_with_data(MAILMIME_DISPOSITION_TYPE_ATTACHMENT,
+                                                         disposition_name, NULL, NULL, NULL, (size_t) -1);
+    }
+    content = mailmime_content_new_with_str(mime_type);
+    
+    encoding_type = MAILMIME_MECHANISM_BASE64;
+    encoding = mailmime_mechanism_new(encoding_type, NULL);
     dup_content_id = NULL;
     if (content_id != NULL)
         dup_content_id = strdup(content_id);
     dup_content_description = NULL;
     if (content_description != NULL)
         dup_content_description = strdup(content_description);
-	mime_fields = mailmime_fields_new_with_data(encoding,
-												dup_content_id, dup_content_description, disposition, NULL);
-	mime = part_new_empty(content, mime_fields, NULL, 1);
-	mailmime_set_body_text(mime, (char *) text, length);
-	
-	return mime;
+    mime_fields = mailmime_fields_new_with_data(encoding,
+                                                dup_content_id, dup_content_description, disposition, NULL);
+    
+    if (contentTypeParameters != NULL) {
+        clist_concat(content->ct_parameters, contentTypeParameters);
+    }
+    
+    mime = part_new_empty(content, mime_fields, NULL, 1);
+    mailmime_set_body_text(mime, (char *) text, length);
+    
+    return mime;
 }
 
 #define MIME_ENCODED_STR(str) (str != NULL ? str->encodedMIMEHeaderValue()->bytes() : NULL)
 
-static struct mailmime * mime_from_attachment(Attachment * att)
+static clist * content_type_parameters_from_attachment(Attachment * att)
+{
+    clist * contentTypeParameters = NULL;
+    struct mailmime_parameter * param;
+    
+    mc_foreacharray(String, name, att->allContentTypeParametersNames()) {
+        if (contentTypeParameters == NULL) {
+            contentTypeParameters = clist_new();
+        }
+        String * value = att->contentTypeParameterValueForName(name);
+        param = mailmime_param_new_with_data((char *)name->UTF8Characters(), (char *)value->UTF8Characters());
+        clist_append(contentTypeParameters, param);
+    }
+
+    return contentTypeParameters;
+}
+
+static struct mailmime * mime_from_attachment(Attachment * att, bool forEncryption)
 {
     struct mailmime * mime;
     Data * data;
@@ -262,30 +316,40 @@ static struct mailmime * mime_from_attachment(Attachment * att)
         if (r != MAILIMF_NO_ERROR)
             return NULL;
     }
-    else if (att->isInlineAttachment() && att->mimeType()->lowercaseString()->isEqual(MCSTR("text/plain"))) {
-        mime = get_plain_text_part(MCUTF8(att->mimeType()), MCUTF8(att->charset()),
-            MCUTF8(att->contentID()),
-            MIME_ENCODED_STR(att->contentDescription()),
-            data->bytes(), data->length());
-    }
-    else if (att->isInlineAttachment() && att->mimeType()->lowercaseString()->hasPrefix(MCSTR("text/"))) {
-        mime = get_other_text_part(MCUTF8(att->mimeType()), MCUTF8(att->charset()),
-            MCUTF8(att->contentID()),
-            MIME_ENCODED_STR(att->contentDescription()),
-            data->bytes(), data->length());
-    }
     else {
-        mime = get_file_part(MIME_ENCODED_STR(att->filename()),
-            MCUTF8(att->mimeType()), att->isInlineAttachment(),
-            MCUTF8(att->contentID()),
-            MIME_ENCODED_STR(att->contentDescription()),
-            data->bytes(), data->length());
+        clist * contentTypeParameters = content_type_parameters_from_attachment(att);
+        if (att->isInlineAttachment() && att->mimeType()->lowercaseString()->isEqual(MCSTR("text/plain"))) {
+            mime = get_plain_text_part(MCUTF8(att->mimeType()), MCUTF8(att->charset()),
+                                       MCUTF8(att->contentID()),
+                                       MIME_ENCODED_STR(att->contentDescription()),
+                                       data->bytes(), data->length(),
+                                       contentTypeParameters,
+                                       forEncryption);
+        }
+        else if (att->isInlineAttachment() && att->mimeType()->lowercaseString()->hasPrefix(MCSTR("text/"))) {
+            mime = get_other_text_part(MCUTF8(att->mimeType()), MCUTF8(att->charset()),
+                                       MCUTF8(att->contentID()),
+                                       MIME_ENCODED_STR(att->contentDescription()),
+                                       data->bytes(), data->length(),
+                                       contentTypeParameters);
+        }
+        else {
+            mime = get_file_part(MIME_ENCODED_STR(att->filename()),
+                                 MCUTF8(att->mimeType()), att->isInlineAttachment(),
+                                 MCUTF8(att->contentID()),
+                                 MIME_ENCODED_STR(att->contentDescription()),
+                                 data->bytes(), data->length(),
+                                 contentTypeParameters);
+        }
+        if (contentTypeParameters != NULL) {
+            clist_free(contentTypeParameters);
+        }
     }
     return mime;
 }
 
 static struct mailmime * multipart_related_from_attachments(Attachment * htmlAttachment,
-    Array * attachments, const char * boundary_prefix)
+    Array * attachments, const char * boundary_prefix, bool forEncryption)
 {
     if ((attachments != NULL) && (attachments->count() > 0)) {
         struct mailmime * submime;
@@ -293,14 +357,14 @@ static struct mailmime * multipart_related_from_attachments(Attachment * htmlAtt
         
         mime = get_multipart_related(boundary_prefix);
         
-        submime = mime_from_attachment(htmlAttachment);
+        submime = mime_from_attachment(htmlAttachment, forEncryption);
         add_attachment(mime, submime, boundary_prefix);
         
         for(unsigned int i = 0 ; i < attachments->count() ; i ++) {
             Attachment * attachment;
             
             attachment = (Attachment *) attachments->objectAtIndex(i);
-            submime = mime_from_attachment(attachment);
+            submime = mime_from_attachment(attachment, forEncryption);
             add_attachment(mime, submime, boundary_prefix);
         }
         
@@ -309,7 +373,7 @@ static struct mailmime * multipart_related_from_attachments(Attachment * htmlAtt
     else {
         struct mailmime * mime;
         
-        mime = mime_from_attachment(htmlAttachment);
+        mime = mime_from_attachment(htmlAttachment, forEncryption);
         
         return mime;
     }
@@ -481,11 +545,11 @@ void MessageBuilder::init()
 {
     mHTMLBody = NULL;
     mTextBody = NULL;
-	mAttachments = NULL;
-	mRelatedAttachments = NULL;
+    mAttachments = NULL;
+    mRelatedAttachments = NULL;
     mBoundaryPrefix = NULL;
 }
-	
+    
 MessageBuilder::MessageBuilder()
 {
     init();
@@ -509,7 +573,7 @@ MessageBuilder::~MessageBuilder()
     MC_SAFE_RELEASE(mRelatedAttachments);
     MC_SAFE_RELEASE(mBoundaryPrefix);
 }
-	
+    
 String * MessageBuilder::description()
 {
     String * result = String::string();
@@ -580,6 +644,9 @@ Array * MessageBuilder::attachments()
 
 void MessageBuilder::addAttachment(Attachment * attachment)
 {
+    if (attachment == NULL) {
+        return;
+    }
     if (mAttachments == NULL) {
         mAttachments = new Array();
     }
@@ -598,6 +665,9 @@ Array * MessageBuilder::relatedAttachments()
 
 void MessageBuilder::addRelatedAttachment(Attachment * attachment)
 {
+    if (attachment == NULL) {
+        return;
+    }
     if (mRelatedAttachments == NULL) {
         mRelatedAttachments = new Array();
     }
@@ -614,43 +684,39 @@ String * MessageBuilder::boundaryPrefix()
     return mBoundaryPrefix;
 }
 
-Data * MessageBuilder::dataAndFilterBcc(bool filterBcc)
+struct mailmime * MessageBuilder::mimeAndFilterBccAndForEncryption(bool filterBcc, bool forEncryption)
 {
-    Data * data;
-    MMAPString * str;
-    int col;
-
     struct mailmime * htmlPart;
     struct mailmime * textPart;
     struct mailmime * altPart;
     struct mailmime * mainPart;
-
+    
     htmlPart = NULL;
     textPart = NULL;
     altPart = NULL;
     mainPart = NULL;
-
+    
     if (htmlBody() != NULL) {
         Attachment * htmlAttachment;
-
+        
         htmlAttachment = Attachment::attachmentWithHTMLString(htmlBody());
         htmlPart = multipart_related_from_attachments(htmlAttachment, mRelatedAttachments,
-            MCUTF8(mBoundaryPrefix));
+                                                      MCUTF8(mBoundaryPrefix), forEncryption);
     }
-
+    
     if (textBody() != NULL) {
         Attachment * textAttachment;
-
+        
         textAttachment = Attachment::attachmentWithText(textBody());
-        textPart = mime_from_attachment(textAttachment);
+        textPart = mime_from_attachment(textAttachment, forEncryption);
     }
     else if (htmlBody() != NULL) {
         Attachment * textAttachment;
-
+        
         textAttachment = Attachment::attachmentWithText(htmlBody()->flattenHTML());
-        textPart = mime_from_attachment(textAttachment);
+        textPart = mime_from_attachment(textAttachment, forEncryption);
     }
-
+    
     if ((textPart != NULL) && (htmlPart != NULL)) {
         altPart = get_multipart_alternative(MCUTF8(mBoundaryPrefix));
         mailmime_smart_add_part(altPart, textPart);
@@ -663,44 +729,66 @@ Data * MessageBuilder::dataAndFilterBcc(bool filterBcc)
     else if (htmlPart != NULL) {
         mainPart = htmlPart;
     }
-
+    
     struct mailimf_fields * fields;
     unsigned int i;
     struct mailmime * mime;
-
+    
     fields = header()->createIMFFieldsAndFilterBcc(filterBcc);
-
+    
     mime = mailmime_new_message_data(NULL);
     mailmime_set_imf_fields(mime, fields);
-
+    
     if (mainPart != NULL) {
         add_attachment(mime, mainPart, MCUTF8(mBoundaryPrefix));
     }
-
+    
     if (attachments() != NULL) {
         for(i = 0 ; i < attachments()->count() ; i ++) {
             Attachment * attachment;
             struct mailmime * submime;
-
+            
             attachment = (Attachment *) attachments()->objectAtIndex(i);
-            submime = mime_from_attachment(attachment);
+            submime = mime_from_attachment(attachment, forEncryption);
             add_attachment(mime, submime, MCUTF8(mBoundaryPrefix));
         }
     }
     
+    struct mailmime * result = mime;
+    if (forEncryption) {
+        result = mime->mm_data.mm_message.mm_msg_mime;
+        mime->mm_data.mm_message.mm_msg_mime = NULL;
+        mailmime_free(mime);
+    }
+    
+    return result;
+}
+
+Data * MessageBuilder::dataAndFilterBccAndForEncryption(bool filterBcc, bool forEncryption)
+{
+    Data * data;
+    MMAPString * str;
+    int col;
+    
     str = mmap_string_new("");
     col = 0;
+    struct mailmime * mime = mimeAndFilterBccAndForEncryption(filterBcc, forEncryption);
     mailmime_write_mem(str, &col, mime);
     data = Data::dataWithBytes(str->str, (unsigned int) str->len);
     mmap_string_free(str);
     mailmime_free(mime);
-
+    
     return data;
 }
 
 Data * MessageBuilder::data()
 {
-    return dataAndFilterBcc(false);
+    return dataAndFilterBccAndForEncryption(false, false);
+}
+
+Data * MessageBuilder::dataForEncryption()
+{
+    return dataAndFilterBccAndForEncryption(false, true);
 }
 
 String * MessageBuilder::htmlRendering(HTMLRendererTemplateCallback * htmlCallback)
@@ -727,3 +815,99 @@ String * MessageBuilder::plainTextBodyRendering(bool stripWhitespace)
     return message->plainTextBodyRendering(stripWhitespace);
 }
 
+struct mailmime * get_signature_part(Data * signature)
+{
+    struct mailmime * mime;
+    struct mailmime_content * content;
+    
+    content = mailmime_content_new_with_str("application/pgp-signature");
+    struct mailmime_fields * mime_fields = mailmime_fields_new_empty();
+    mime = part_new_empty(content, mime_fields, NULL, 1);
+    mailmime_set_body_text(mime, signature->bytes(), signature->length());
+    
+    return mime;
+}
+
+Data * MessageBuilder::openPGPSignedMessageDataWithSignatureData(Data * signature)
+{
+    struct mailimf_fields * fields;
+    struct mailmime * mime;
+    
+    fields = header()->createIMFFieldsAndFilterBcc(false);
+    
+    mime = mailmime_new_message_data(NULL);
+    mailmime_set_imf_fields(mime, fields);
+    
+    struct mailmime * multipart = get_multipart_signed_pgp(MCUTF8(boundaryPrefix()));
+    add_attachment(mime, multipart, MCUTF8(boundaryPrefix()));
+    struct mailmime * part_to_sign = mimeAndFilterBccAndForEncryption(false, true);
+    add_attachment(multipart, part_to_sign, MCUTF8(boundaryPrefix()));
+    struct mailmime * signature_part = get_signature_part(signature);
+    add_attachment(multipart, signature_part, MCUTF8(boundaryPrefix()));
+    
+    MMAPString * str = mmap_string_new("");
+    int col = 0;
+    
+    mailmime_write_mem(str, &col, mime);
+    Data * data = Data::dataWithBytes(str->str, (unsigned int) str->len);
+    mmap_string_free(str);
+    mailmime_free(mime);
+    
+    return data;
+}
+
+static struct mailmime * get_pgp_version_part(void)
+{
+    struct mailmime * mime;
+    struct mailmime_content * content;
+    
+    content = mailmime_content_new_with_str("application/pgp-encrypted");
+    struct mailmime_fields * mime_fields = mailmime_fields_new_empty();
+    mime = part_new_empty(content, mime_fields, NULL, 1);
+    const char * version = "Version: 1\r\n";
+    mailmime_set_body_text(mime, (char *) version, strlen(version));
+    
+    return mime;
+}
+
+static struct mailmime * get_encrypted_part(Data * encryptedData)
+{
+    struct mailmime * mime;
+    struct mailmime_content * content;
+    
+    content = mailmime_content_new_with_str("application/octet-stream");
+    struct mailmime_fields * mime_fields = mailmime_fields_new_empty();
+    mime = part_new_empty(content, mime_fields, NULL, 1);
+    mailmime_set_body_text(mime, encryptedData->bytes(), encryptedData->length());
+    
+    return mime;
+}
+
+Data * MessageBuilder::openPGPEncryptedMessageDataWithEncryptedData(Data * encryptedData)
+{
+    struct mailimf_fields * fields;
+    struct mailmime * mime;
+    
+    fields = header()->createIMFFieldsAndFilterBcc(false);
+    
+    mime = mailmime_new_message_data(NULL);
+    mailmime_set_imf_fields(mime, fields);
+    
+    struct mailmime * multipart = get_multipart_encrypted_pgp(MCUTF8(boundaryPrefix()));
+    add_attachment(mime, multipart, MCUTF8(boundaryPrefix()));
+    
+    struct mailmime * version_part = get_pgp_version_part();
+    add_attachment(multipart, version_part, MCUTF8(boundaryPrefix()));
+    struct mailmime * encrypted_part = get_encrypted_part(encryptedData);
+    add_attachment(multipart, encrypted_part, MCUTF8(boundaryPrefix()));
+    
+    MMAPString * str = mmap_string_new("");
+    int col = 0;
+    
+    mailmime_write_mem(str, &col, mime);
+    Data * data = Data::dataWithBytes(str->str, (unsigned int) str->len);
+    mmap_string_free(str);
+    mailmime_free(mime);
+    
+    return data;
+}

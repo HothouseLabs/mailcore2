@@ -1,18 +1,19 @@
-#ifndef __MAILCORE_MCIMAPPROGRESSCALLBACK_H_
+#ifndef MAILCORE_MCIMAPPROGRESSCALLBACK_H
 
-#define __MAILCORE_MCIMAPPROGRESSCALLBACK_H_
+#define MAILCORE_MCIMAPPROGRESSCALLBACK_H
 
 #ifdef __cplusplus
 
 namespace mailcore {
-
-	class IMAPSession;
-
-	class IMAPProgressCallback {
-	public:
-		virtual void bodyProgress(IMAPSession * session, unsigned int current, unsigned int maximum) {};
-		virtual void itemsProgress(IMAPSession * session, unsigned int current, unsigned int maximum) {};
-	};
+    
+    class IMAPSession;
+    
+    class IMAPProgressCallback {
+    public:
+        virtual void bodyProgress(IMAPSession * session, unsigned int current, unsigned int maximum) {};
+        virtual void itemsProgress(IMAPSession * session, unsigned int current, unsigned int maximum) {};
+    };
+    
 }
 
 #endif

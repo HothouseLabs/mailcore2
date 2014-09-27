@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCARRAY_H_
+#ifndef MAILCORE_MCARRAY_H
 
-#define __MAILCORE_MCARRAY_H_
+#define MAILCORE_MCARRAY_H
 
 #include <MailCore/MCObject.h>
 
@@ -9,9 +9,9 @@
 typedef struct carray_s carray;
 
 namespace mailcore {
-
+    
     class String;
-
+    
     class Array : public Object {
     public:
         Array();
@@ -19,7 +19,7 @@ namespace mailcore {
         
         static Array * array();
         static Array * arrayWithObject(Object * obj);
-
+        
         virtual unsigned int count();
         virtual void addObject(Object * obj);
         virtual void removeObjectAtIndex(unsigned int idx);
@@ -32,9 +32,11 @@ namespace mailcore {
         
         virtual void addObjectsFromArray(Array * array);
         virtual Object * lastObject();
+        virtual void removeLastObject();
         virtual bool containsObject(Object * obj);
         
         virtual Array * sortedArray(int (* compare)(void * a, void * b, void * context), void * context);
+        virtual void sortArray(int (* compare)(void * a, void * b, void * context), void * context);
         virtual String * componentsJoinedByString(String * delimiter);
         
     public: // subclass behavior
@@ -48,7 +50,7 @@ namespace mailcore {
         carray * mArray;
         void init();
     };
-
+    
 }
 
 #endif

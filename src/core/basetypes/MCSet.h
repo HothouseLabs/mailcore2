@@ -1,17 +1,17 @@
-#ifndef __MAILCORE_CSET_H_
+#ifndef MAILCORE_CSET_H
 
-#define __MAILCORE_CSET_H_
+#define MAILCORE_CSET_H
 
 #include <MailCore/MCObject.h>
 
 #ifdef __cplusplus
 
 namespace mailcore {
-
+    
     class String;
     class Array;
     class HashMap;
-
+    
     class Set : public Object {
     public:
         Set();
@@ -19,7 +19,7 @@ namespace mailcore {
         
         static Set * set();
         static Set * setWithArray(Array * objects);
-
+        
         virtual unsigned int count();
         virtual void addObject(Object * obj);
         virtual void removeObject(Object * obj);

@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCDATA_H_
+#ifndef MAILCORE_MCDATA_H
 
-#define __MAILCORE_MCDATA_H_
+#define MAILCORE_MCDATA_H
 
 #include <MailCore/MCObject.h>
 #include <MailCore/MCMessageConstants.h>
@@ -8,9 +8,9 @@
 #ifdef __cplusplus
 
 namespace mailcore {
-
+    
     class String;
-
+    
     class Data : public Object {
     public:
         Data();

@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCIMAPFOLDERINFOOPERATION_H_
+#ifndef MAILCORE_MCIMAPFOLDERINFOOPERATION_H
 
-#define __MAILCORE_MCIMAPFOLDERINFOOPERATION_H_
+#define MAILCORE_MCIMAPFOLDERINFOOPERATION_H
 
 #include <MailCore/MCIMAPOperation.h>
 
@@ -26,6 +26,7 @@ namespace mailcore {
         virtual uint64_t modSequenceValue();
         virtual int messageCount();
         virtual uint32_t firstUnseenUid();
+        virtual bool allowsNewPermanentFlags();
         
     public: // subclass behavior
         virtual void main();
@@ -37,7 +38,8 @@ namespace mailcore {
         uint64_t mModSequenceValue;
         int mMessageCount;
         uint32_t mFirstUnseenUid;
-        
+        bool mAllowsNewPermanentFlags;
+      
     };
 
 }

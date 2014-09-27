@@ -67,6 +67,7 @@ private:
 - (void)dealloc {
     MC_SAFE_RELEASE(_loggerBridge);
     [_connectionLogger release];
+    _session->setConnectionLogger(NULL);
     _session->release();
     [super dealloc];
 }
@@ -81,6 +82,7 @@ MCO_OBJC_SYNTHESIZE_SCALAR(MCOConnectionType, mailcore::ConnectionType, setConne
 MCO_OBJC_SYNTHESIZE_SCALAR(NSTimeInterval, time_t, setTimeout, timeout)
 MCO_OBJC_SYNTHESIZE_BOOL(setCheckCertificateEnabled, isCheckCertificateEnabled)
 MCO_OBJC_SYNTHESIZE_BOOL(setUseHeloIPEnabled, useHeloIPEnabled)
+MCO_OBJC_SYNTHESIZE_SCALAR(dispatch_queue_t, dispatch_queue_t, setDispatchQueue, dispatchQueue);
 
 - (void) setConnectionLogger:(MCOConnectionLogger)connectionLogger
 {
@@ -123,7 +125,7 @@ MCO_OBJC_SYNTHESIZE_BOOL(setUseHeloIPEnabled, useHeloIPEnabled)
     return result;
 }
 
-- (MCOOperation *) checkAccountOperationWithFrom:(MCOAddress *)from
+- (MCOSMTPOperation *) checkAccountOperationWithFrom:(MCOAddress *)from
 {
     mailcore::SMTPOperation *coreOp = MCO_NATIVE_INSTANCE->checkAccountOperation(MCO_FROM_OBJC(mailcore::Address, from));
     MCOSMTPOperation * result = [[[MCOSMTPOperation alloc] initWithMCOperation:coreOp] autorelease];

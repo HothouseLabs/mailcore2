@@ -27,6 +27,7 @@ AbstractPart::AbstractPart(AbstractPart * other)
     setContentDescription(other->mContentDescription);
     setInlineAttachment(other->mInlineAttachment);
     setPartType(other->mPartType);
+    setContentTypeParameters(other->mContentTypeParameters);
 }
 
 void AbstractPart::init()
@@ -40,6 +41,7 @@ void AbstractPart::init()
     mContentDescription = NULL;
     mInlineAttachment = false;
     mPartType = PartTypeSingle;
+    mContentTypeParameters = NULL;
 }
 
 AbstractPart::~AbstractPart()
@@ -51,6 +53,7 @@ AbstractPart::~AbstractPart()
     MC_SAFE_RELEASE(mContentID);
     MC_SAFE_RELEASE(mContentLocation);
     MC_SAFE_RELEASE(mContentDescription);
+    MC_SAFE_RELEASE(mContentTypeParameters);
 }
 
 String * AbstractPart::description()
@@ -76,6 +79,11 @@ String * AbstractPart::description()
         result->appendUTF8Format("content-description: %s\n", mContentDescription->UTF8Characters());
     }
     result->appendUTF8Format("inline: %i\n", mInlineAttachment);
+    if (mContentTypeParameters != NULL) {
+        mc_foreachhashmapKeyAndValue(String, key, String, value, mContentTypeParameters) {
+            result->appendUTF8Format("%s: %s\n", key->UTF8Characters(), value->UTF8Characters());
+        }
+    }
     result->appendUTF8Format(">");
     
     return result;
@@ -179,40 +187,40 @@ void AbstractPart::setInlineAttachment(bool inlineAttachment)
 void AbstractPart::importIMAPFields(struct mailimap_body_fields * fields,
     struct mailimap_body_ext_1part * extension)
 {
-	if (fields->bd_parameter != NULL) {
-		clistiter * cur;
-		
-		for(cur = clist_begin(fields->bd_parameter->pa_list) ; cur != NULL ;
-			cur = clist_next(cur)) {
-			struct mailimap_single_body_fld_param * imap_param;
-			
-			imap_param = (struct mailimap_single_body_fld_param *) clist_content(cur);
-			
-			if (strcasecmp(imap_param->pa_name, "name") == 0) {
+    if (fields->bd_parameter != NULL) {
+        clistiter * cur;
+        
+        for(cur = clist_begin(fields->bd_parameter->pa_list) ; cur != NULL ;
+            cur = clist_next(cur)) {
+            struct mailimap_single_body_fld_param * imap_param;
+            
+            imap_param = (struct mailimap_single_body_fld_param *) clist_content(cur);
+            
+            if (strcasecmp(imap_param->pa_name, "name") == 0) {
                 setFilename(String::stringByDecodingMIMEHeaderValue(imap_param->pa_value));
-			}
-			else if (strcasecmp(imap_param->pa_name, "charset") == 0) {
+            }
+            else if (strcasecmp(imap_param->pa_name, "charset") == 0) {
                 setCharset(String::stringByDecodingMIMEHeaderValue(imap_param->pa_value));
-			}
-		}
-	}
+            }
+        }
+    }
     if (fields->bd_id != NULL) {
-		char * contentid;
-		size_t cur_token;
-		int r;
-		
-		cur_token = 0;
-		r = mailimf_msg_id_parse(fields->bd_id, strlen(fields->bd_id),
+        char * contentid;
+        size_t cur_token;
+        int r;
+        
+        cur_token = 0;
+        r = mailimf_msg_id_parse(fields->bd_id, strlen(fields->bd_id),
             &cur_token, &contentid);
-		if (r == MAILIMF_NO_ERROR) {
-			// msg id
+        if (r == MAILIMF_NO_ERROR) {
+            // msg id
             setContentID(String::stringWithUTF8Characters(contentid));
             free(contentid);
-		}
+        }
     }
     if (fields->bd_description != NULL) {
         setContentDescription(String::stringWithUTF8Characters(fields->bd_description));
-	}
+    }
     
     if (extension != NULL) {
         if (extension->bd_disposition != NULL) {
@@ -264,15 +272,15 @@ AbstractPart * AbstractPart::partForUniqueID(String * uniqueID)
 
 String * AbstractPart::decodedStringForData(Data * data)
 {
-	String *lowerMimeType = mMimeType ? mMimeType->lowercaseString() : NULL;
-	
-	if (lowerMimeType && lowerMimeType->hasPrefix(MCSTR("text/"))) {
-		bool isHTML = lowerMimeType->isEqual(MCSTR("text/html"));
-		return data->stringWithDetectedCharset(mCharset, isHTML);
-	}
-	else {
-		return NULL;
-	}
+    String *lowerMimeType = mMimeType ? mMimeType->lowercaseString() : NULL;
+    
+    if (lowerMimeType && lowerMimeType->hasPrefix(MCSTR("text/"))) {
+        bool isHTML = lowerMimeType->isEqual(MCSTR("text/html"));
+        return data->stringWithDetectedCharset(mCharset, isHTML);
+    }
+    else {
+        return NULL;
+    }
 }
 
 void AbstractPart::applyUniquePartID()
@@ -294,6 +302,7 @@ void AbstractPart::applyUniquePartID()
             case PartTypeMultipartMixed:
             case PartTypeMultipartRelated:
             case PartTypeMultipartAlternative:
+            case PartTypeMultipartSigned:
                 queue->addObjectsFromArray(((AbstractMultipart *) part)->parts());
                 break;
         }
@@ -348,6 +357,9 @@ HashMap * AbstractPart::serializable()
         case PartTypeMultipartAlternative:
             partTypeStr = MCSTR("multipart/alternative");
             break;
+        case PartTypeMultipartSigned:
+            partTypeStr = MCSTR("multipart/signed");
+            break;
     }
     result->setObjectForKey(MCSTR("partType"), partTypeStr);
     
@@ -386,5 +398,51 @@ void AbstractPart::importSerializable(HashMap * serializable)
         else if (value->isEqual(MCSTR("multipart/alternative"))) {
             setPartType(PartTypeMultipartAlternative);
         }
+        else if (value->isEqual(MCSTR("multipart/signed"))) {
+            setPartType(PartTypeMultipartSigned);
+        }
     }
+}
+
+void AbstractPart::setContentTypeParameters(HashMap * parameters)
+{
+    MC_SAFE_REPLACE_COPY(HashMap, mContentTypeParameters, parameters);
+}
+
+Array * AbstractPart::allContentTypeParametersNames()
+{
+    if (mContentTypeParameters == NULL)
+        return Array::array();
+    return mContentTypeParameters->allKeys();
+}
+
+void AbstractPart::setContentTypeParameter(String * name, String * object)
+{
+    if (mContentTypeParameters == NULL) {
+        mContentTypeParameters = new HashMap();
+    }
+    removeContentTypeParameter(name);
+    mContentTypeParameters->setObjectForKey(name, object);
+}
+
+void AbstractPart::removeContentTypeParameter(String * name)
+{
+    if (mContentTypeParameters == NULL)
+        return;
+    mc_foreachhashmapKey(String, key, mContentTypeParameters) {
+        if (key->isEqualCaseInsensitive(name)) {
+            mContentTypeParameters->removeObjectForKey(key);
+            break;
+        }
+    }
+}
+
+String * AbstractPart::contentTypeParameterValueForName(String * name)
+{
+    mc_foreachhashmapKey(String, key, mContentTypeParameters) {
+        if (key->isEqualCaseInsensitive(name)) {
+            return (String *) mContentTypeParameters->objectForKey(key);
+        }
+    }
+    return NULL;
 }

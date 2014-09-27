@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCIMAPFETCHMESSAGESOPERATION_H_
+#ifndef MAILCORE_MCIMAPFETCHMESSAGESOPERATION_H
 
-#define __MAILCORE_MCIMAPFETCHMESSAGESOPERATION_H_
+#define MAILCORE_MCIMAPFETCHMESSAGESOPERATION_H
 
 #include <MailCore/MCIMAPOperation.h>
 
@@ -53,6 +53,7 @@ namespace mailcore {
         uint64_t mModSequenceValue;
         
     };
+    
 }
 
 #endif

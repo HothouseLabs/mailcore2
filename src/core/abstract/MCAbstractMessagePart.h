@@ -1,6 +1,6 @@
-#ifndef __MAILCORE_MCABSTRACTMESSAGEPART_H_
+#ifndef MAILCORE_MCABSTRACTMESSAGEPART_H
 
-#define __MAILCORE_MCABSTRACTMESSAGEPART_H_
+#define MAILCORE_MCABSTRACTMESSAGEPART_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCAbstractPart.h>
@@ -37,6 +37,7 @@ namespace mailcore {
         MessageHeader * mHeader;
         void init();
     };
+    
 }
 
 #endif

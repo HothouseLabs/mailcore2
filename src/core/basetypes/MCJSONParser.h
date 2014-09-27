@@ -6,8 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCJSONPARSER_H_
-#define __MAILCORE_MCJSONPARSER_H_
+#ifndef MAILCORE_MCJSONPARSER_H
+
+#define MAILCORE_MCJSONPARSER_H
 
 #include <MailCore/MCObject.h>
 #include <MailCore/MCICUTypes.h>
@@ -16,9 +17,8 @@ namespace mailcore {
     
     class Data;
     class String;
-
+    
     class JSONParser : public Object {
-        
     public:
         JSONParser();
         virtual ~JSONParser();

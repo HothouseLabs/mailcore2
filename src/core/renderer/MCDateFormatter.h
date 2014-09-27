@@ -6,8 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCDATEFORMATTER_H_
-#define __MAILCORE_MCDATEFORMATTER_H_
+#ifndef MAILCORE_MCDATEFORMATTER_H
+
+#define MAILCORE_MCDATEFORMATTER_H
 
 #include <MailCore/MCBaseTypes.h>
 
@@ -32,10 +33,10 @@ namespace mailcore {
     
     class DateFormatter : public Object {
     public:
-		DateFormatter();
-		virtual ~DateFormatter();
-		
-		static DateFormatter * dateFormatter();
+        DateFormatter();
+        virtual ~DateFormatter();
+        
+        static DateFormatter * dateFormatter();
         
         virtual void setDateStyle(DateFormatStyle style);
         virtual DateFormatStyle dateStyle();

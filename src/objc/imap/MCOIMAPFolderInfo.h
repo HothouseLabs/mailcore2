@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCOIMAPFOLDERINFO_H_
+#ifndef MAILCORE_MCOIMAPFOLDERINFO_H
 
-#define __MAILCORE_MCOIMAPFOLDERINFO_H_
+#define MAILCORE_MCOIMAPFOLDERINFO_H
 
 #import <Foundation/Foundation.h>
 
@@ -33,6 +33,9 @@
 
 // first uid of the unseen messages.
 @property (nonatomic, assign) uint32_t firstUnseenUid;
+
+/** An boolean indicates that this folder or IMAP server allows to add a new permanent flags */
+@property (nonatomic, assign) BOOL allowsNewPermanentFlags;
 
 @end
 

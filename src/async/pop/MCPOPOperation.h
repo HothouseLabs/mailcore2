@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCPOPOPERATION_H_
+#ifndef MAILCORE_MCPOPOPERATION_H
 
-#define __MAILCORE_MCPOPOPERATION_H_
+#define MAILCORE_MCPOPOPERATION_H
 
 #include <MailCore/MCBaseTypes.h>
 #include <MailCore/MCPOPProgressCallback.h>
@@ -41,7 +41,7 @@ namespace mailcore {
         POPOperationCallback * mPopCallback;
         ErrorCode mError;
     private:
-		virtual void bodyProgress(POPSession * session, unsigned int current, unsigned int maximum);
+        virtual void bodyProgress(POPSession * session, unsigned int current, unsigned int maximum);
         virtual void bodyProgressOnMainThread(void * context);
         
     };

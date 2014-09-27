@@ -6,8 +6,9 @@
 //  Copyright (c) 2013 MailCore. All rights reserved.
 //
 
-#ifndef __MAILCORE_MCIMAPCONNECTOPERATION_H_
-#define __MAILCORE_MCIMAPCONNECTOPERATION_H_
+#ifndef MAILCORE_MCIMAPCONNECTOPERATION_H
+
+#define MAILCORE_MCIMAPCONNECTOPERATION_H
 
 #include <MailCore/MCIMAPOperation.h>
 
@@ -19,6 +20,7 @@ namespace mailcore {
     public: // subclass behavior
         virtual void main();
     };
+    
 }
 
 #endif
