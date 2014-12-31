@@ -16,7 +16,7 @@
 
 namespace mailcore {
     
-    class IMAPFolderInfoOperation : public IMAPOperation {
+    class MAILCORE_EXPORT IMAPFolderInfoOperation : public IMAPOperation {
     public:
         IMAPFolderInfoOperation();
         virtual ~IMAPFolderInfoOperation();

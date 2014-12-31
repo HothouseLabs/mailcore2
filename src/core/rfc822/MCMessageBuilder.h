@@ -12,7 +12,7 @@ namespace mailcore {
     class Attachment;
     class HTMLRendererTemplateCallback;
     
-    class MessageBuilder : public AbstractMessage {
+    class MAILCORE_EXPORT MessageBuilder : public AbstractMessage {
     public:
         MessageBuilder();
         virtual ~MessageBuilder();
@@ -55,6 +55,11 @@ namespace mailcore {
         virtual String * description();
         virtual Object * copy();
         
+    public: // private
+        virtual String * nextBoundary();
+        virtual void resetBoundaries();
+        virtual void setBoundaries(Array * boundaries);
+        
     private:
         String * mHTMLBody;
         String * mTextBody;
@@ -64,6 +69,8 @@ namespace mailcore {
         void init();
         Data * dataAndFilterBccAndForEncryption(bool filterBcc, bool forEncryption);
         struct mailmime * mimeAndFilterBccAndForEncryption(bool filterBcc, bool forEncryption);
+        Array * mBoundaries;
+        unsigned int mCurrentBoundaryIndex;
     };
     
 };
